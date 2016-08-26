@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_start"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.tomtom.camera.app.start.StartActivity">
+
+    <Button
+        android:id="@+id/btn_initialize"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Initialize camera"
+        android:layout_above ="@+id/btn_viewfinder"
+        android:layout_centerHorizontal="true"
+        />
+
+    <Button
+        android:id="@id/btn_viewfinder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ViewFinder"
+        android:layout_alignLeft="@+id/btn_initialize"
+        android:layout_alignRight="@+id/btn_initialize"
+        android:enabled="false"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+ />
+
+    <Button
+        android:id="@+id/btn_library"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Library"
+        android:enabled="false"
+        android:layout_alignLeft="@+id/btn_initialize"
+        android:layout_alignRight="@+id/btn_initialize"
+        android:layout_below ="@+id/btn_viewfinder"
+        android:layout_centerHorizontal="true"
+ />
+</RelativeLayout>

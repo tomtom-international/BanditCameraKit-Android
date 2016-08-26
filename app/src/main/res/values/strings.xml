@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">BanditSdk</string>
+    <string name="title_activity_view_finder">ViewFinderActivity</string>
+    <string name="btn_stop_label">STOP</string>
+    <string name="btn_record_label">RECORD</string>
+    <string name="radio_btn_make_video">Make video</string>
+    <string name="radio_btn_take_picture">Take picture</string>
+    <string name="snackbar_video_creation_started">Video creation started</string>
+    <string name="snackbar_video_created">Video created</string>
+    <string name="snackbar_photo_captured">Photo captured</string>
+</resources>
