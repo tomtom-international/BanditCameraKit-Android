@@ -61,7 +61,7 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
 
     private PreviewApiClient mPreviewApiClient;
 
-    private float mCurrentSeek;
+    private float mCurrentSeekSecs;
     private boolean mShouldPlaySound = true;
 
     private final CameraPreviewStreamServer.OnEosReceivedListener mOnEosReceivedListener = new CameraPreviewStreamServer.OnEosReceivedListener() {
@@ -69,8 +69,8 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
         public void onEosReceived() {
             mPreviewPlayer.play();
             if (mPreviewCameraFiles != null && mCurrentBufferingVideoIndex < mPreviewCameraFiles.size() - 1) {
-                mCurrentSeek = mCurrentSeek + mCurrentPlayableFile.getDurationSecs();
-                seekPreviewForFile(0, mPreviewCameraFiles.get(++mCurrentBufferingVideoIndex).getPlayableFile());
+                mCurrentSeekSecs = mCurrentSeekSecs + mCurrentPlayableFile.getDurationSecs();
+                seekPreviewForFile(mPreviewCameraFiles.get(++mCurrentBufferingVideoIndex).getPlayableFile(), 0);
             }
         }
     };
@@ -100,7 +100,7 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
             if (isFirstFrame) {
                 mCurrentPlayingVideoIndex++;
                 if (mCurrentPlayingVideoIndex == 0 && mOnPreviewVideoListener != null) {
-                    mOnPreviewVideoListener.onPreviewStarted((int) (mCurrentSeek * MILLISECONDS));
+                    mOnPreviewVideoListener.onPreviewStarted((int) (mCurrentSeekSecs * MILLISECONDS));
                 }
             } else if (mIsRestarted) {
                 mIsRestarted = false;
@@ -119,7 +119,7 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
             }
 
             if (mOnPreviewVideoListener != null) {
-                mOnPreviewVideoListener.onPreviewTimeProgress(pts - (int) ((currentlyPlaying.getPlayableFile().getStartOffsetSecs() - currentlyPlaying.getOffsetInTotalDuration()) * MILLISECONDS));
+                mOnPreviewVideoListener.onPreviewTimeProgress(pts - (int) ((currentlyPlaying.getPlayableFile().getStartOffsetSecs() - currentlyPlaying.getOffsetSecsInTotalDuration()) * MILLISECONDS));
             }
 
             processFrameData(data, pts, isFirstFrame);
@@ -218,7 +218,8 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
 
         Logger.info(TAG, "Stopping preview video");
 
-        stopPreviewStreamServer();
+        mPreviewStreamServer.stop();
+        mVideoSurface.stopDrawing();
         sendStopPreview();
     }
 
@@ -234,13 +235,13 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
         mCurrentPreviewCommandToExecute = null;
     }
 
-    private void seekPreviewForFile(float seekToTimeInFile, Playable cameraFile) {
+    private void seekPreviewForFile(Playable cameraFile, float seekToTimeSecs) {
         mCurrentPlayableFile = cameraFile;
         if (isPreviewActive()) {
-            scheduleNextCommand(getStartOnSeekCommand(seekToTimeInFile));
+            scheduleNextCommand(getStartOnSeekCommand(seekToTimeSecs));
             stopPreviewVideoFile();
         } else {
-            sendSeekVideoFileCommand(seekToTimeInFile);
+            sendSeekVideoFileCommand(seekToTimeSecs);
         }
     }
 
@@ -252,7 +253,7 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
         if (!mIsInitialized) {
             throw new IllegalStateException("Preview not initialized.");
         }
-        mCurrentSeek = (float) seekToTimeMilliseconds / MILLISECONDS;
+        mCurrentSeekSecs = (float) (seekToTimeMilliseconds / MILLISECONDS);
         mIsRestarted = true;
         mCurrentBufferingVideoIndex = getPreviewPlayableFileIndex(seekToTimeMilliseconds);
         mCurrentPlayingVideoIndex = mCurrentBufferingVideoIndex - 1;
@@ -263,7 +264,8 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
                 mOnPreviewVideoListener.onEndReceived();
             }
         } else {
-            seekPreviewForFile(mCurrentSeek - previewPlayableFile.getOffsetInTotalDuration(), previewPlayableFile.getPlayableFile());
+            float seekToTimeSecs = mCurrentSeekSecs - previewPlayableFile.getOffsetSecsInTotalDuration();
+            seekPreviewForFile(previewPlayableFile.getPlayableFile(), seekToTimeSecs);
         }
     }
 
@@ -276,14 +278,14 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
         if (!mIsInitialized) {
             throw new IllegalStateException("Preview not initialized.");
         }
-        mCurrentSeek = seekToTimeSeconds;
+        mCurrentSeekSecs = seekToTimeSeconds;
         mIsRestarted = true;
         mCurrentBufferingVideoIndex = getPreviewPlayableFileIndex((int) (seekToTimeSeconds * MILLISECONDS));
         mCurrentPlayingVideoIndex = mCurrentBufferingVideoIndex - 1;
 
         PreviewPlayableFile previewPlayableFile = mPreviewCameraFiles.get(mCurrentBufferingVideoIndex);
 
-        seekPreviewForFile(mCurrentSeek - previewPlayableFile.getOffsetInTotalDuration(), duration, previewPlayableFile.getPlayableFile());
+        seekPreviewForFile(mCurrentSeekSecs - previewPlayableFile.getOffsetSecsInTotalDuration(), duration, previewPlayableFile.getPlayableFile());
     }
 
     private void seekPreviewForFile(float seekToTimeInFile, float duration, Playable cameraFile) {
@@ -303,23 +305,11 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
      * @param pausePreview {@code true} if pausing, {@code false} if unpausing/resuming
      */
     public void pausePreview(boolean pausePreview) {
-        if (pausePreview) {
-            stopPreview();
-            if (mPreviewStreamServer.isRunning()) {
-                mPreviewStreamServer.stop();
-            }
-        } else {
-            startPreview();
-        }
+        mPreviewPlayer.pause(pausePreview);
     }
 
     private void startPreviewStreamServer() {
         mPreviewStreamServer.start();
-    }
-
-    private synchronized void stopPreviewStreamServer() {
-        mPreviewStreamServer.stop();
-        mVideoSurface.stopDrawing();
     }
 
     /**
@@ -341,23 +331,24 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
 
     private synchronized void stopPreviewVideoFile() {
         if (mCurrentBufferingVideoIndex == 0) {
-            stopPreviewStreamServer();
+            mPreviewStreamServer.stop();
+            mVideoSurface.stopDrawing();
         }
         sendStopPreview();
     }
 
-    private void sendSeekVideoFileCommand(float seekToTime) {
+    private void sendSeekVideoFileCommand(float seekToTimeSecs) {
         startPreviewStreamServer();
         Logger.info(TAG, "Sending seek preview command");
-        sendPreviewCommand(getStartOnSeekCommand(seekToTime));
+        sendPreviewCommand(getStartOnSeekCommand(seekToTimeSecs));
     }
 
-    private PreviewCommand getStartOnSeekCommand(float seekToTime) {
-        return getStartPreviewCommand(seekToTime + mCurrentPlayableFile.getStartOffsetSecs(), mCurrentPlayableFile.getDurationSecs() - seekToTime);
+    private PreviewCommand getStartOnSeekCommand(float seekToTimeSecs) {
+        return getStartPreviewCommand(seekToTimeSecs + mCurrentPlayableFile.getStartOffsetSecs(), mCurrentPlayableFile.getDurationSecs() - seekToTimeSecs);
     }
 
-    private PreviewCommand getStartPreviewCommand(float previewStartPosition, float length) {
-        return PreviewCommand.createStart(mCurrentPlayableFile.getPlayableId(), mPreviewStreamServer.getPort(), previewStartPosition, length);
+    private PreviewCommand getStartPreviewCommand(float previewStartPositionSecs, float lengthSecs) {
+        return PreviewCommand.createStart(mCurrentPlayableFile.getPlayableId(), mPreviewStreamServer.getPort(), previewStartPositionSecs, lengthSecs);
     }
 
     private void sendStopPreview() {
@@ -500,7 +491,7 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
     public Pair<String, Float> getPlayableFileIdAndOffset(int timeMillisInTotalDuration) {
         float secondsInTotalDuration = (float) timeMillisInTotalDuration / MILLISECONDS;
         PreviewPlayableFile previewPlayableFile = getPreviewPlayableFileOnPosition(timeMillisInTotalDuration);
-        return new Pair<>(previewPlayableFile.getPlayableFile().getPlayableId(), secondsInTotalDuration - previewPlayableFile.getOffsetInTotalDuration() + previewPlayableFile.getPlayableFile().getStartOffsetSecs());
+        return new Pair<>(previewPlayableFile.getPlayableFile().getPlayableId(), secondsInTotalDuration - previewPlayableFile.getOffsetSecsInTotalDuration() + previewPlayableFile.getPlayableFile().getStartOffsetSecs());
     }
 
     /**
@@ -513,11 +504,11 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
 
     private class PreviewPlayableFile {
         private Playable mCameraFile;
-        private float mOffsetInTotalDuration;
+        private float mOffsetSecsInTotalDuration;
 
-        public PreviewPlayableFile(Playable cameraFile, float offsetInTotalDuration) {
+        public PreviewPlayableFile(Playable cameraFile, float offsetSecsInTotalDuration) {
             mCameraFile = cameraFile;
-            mOffsetInTotalDuration = offsetInTotalDuration;
+            mOffsetSecsInTotalDuration = offsetSecsInTotalDuration;
         }
 
         /**
@@ -532,8 +523,8 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
          * Offset in total duration of video file
          * @return offset in seconds
          */
-        public float getOffsetInTotalDuration() {
-            return mOffsetInTotalDuration;
+        public float getOffsetSecsInTotalDuration() {
+            return mOffsetSecsInTotalDuration;
         }
     }
 

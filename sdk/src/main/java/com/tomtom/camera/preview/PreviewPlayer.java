@@ -31,6 +31,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -48,7 +49,7 @@ class PreviewPlayer {
     private ScheduledFuture<?> mHandle;
     private VideoThread mVideoRunnable;
 
-    private boolean mIsPlaying;
+    private AtomicBoolean mIsPlaying = new AtomicBoolean();
     private AudioThread mAudioThread;
     private boolean mReadyToPlayAudio;
     private Object mNotifyObject = new Object();
@@ -73,8 +74,7 @@ class PreviewPlayer {
     }
 
     void play() {
-        if (!mIsPlaying) {
-            mIsPlaying = true;
+        if (mIsPlaying.compareAndSet(false, true)) {
             mHandle = mScheduler.schedule(mVideoRunnable,0 , MILLISECONDS);
             if (mAudioThread == null || !mAudioThread.isAudioRunning()) {
                 mAudioThread = new AudioThread();
@@ -84,8 +84,7 @@ class PreviewPlayer {
     }
 
     void stop() {
-        if (mIsPlaying) {
-            mIsPlaying = false;
+        if (mIsPlaying.compareAndSet(false, true)) {
             mHandle.cancel(true);
         }
     }
@@ -134,7 +133,7 @@ class PreviewPlayer {
 
         @Override
         public void run() {
-            while (mIsPlaying && mIsAudioRunning) {
+            while (mIsPlaying.get() && mIsAudioRunning) {
                 Frame audioFrame = mPreviewBuffer.peek(Frame.Type.AUDIO);
                 int adtsSampleRate;
                 ByteBuffer csdBytes;
@@ -191,10 +190,10 @@ class PreviewPlayer {
                 boolean sawOutputEOS = false;
                 boolean sawFirstFrame = false;
 
-                while (!sawOutputEOS && mIsPlaying && mIsAudioRunning) {
+                while (!sawOutputEOS && mIsPlaying.get() && mIsAudioRunning) {
 
                     while (!mPreviewBuffer.hasAudioFrames()) {
-                        if (!(mIsAudioRunning && mIsPlaying)) {
+                        if (!(mIsAudioRunning && mIsPlaying.get())) {
                             break;
                         }
                         try {
@@ -204,7 +203,7 @@ class PreviewPlayer {
                         }
                     }
 
-                    if (!(mIsAudioRunning && mIsPlaying)) {
+                    if (!(mIsAudioRunning && mIsPlaying.get())) {
                         break;
                     }
 
@@ -349,7 +348,7 @@ class PreviewPlayer {
             int nextPts = mPreviewBuffer.getNextVideoPts();
             if(nextPts != -1
                     && mPreviewBuffer.getBufferState() != StreamBuffer.BufferState.EMPTY
-                    && mIsPlaying) {
+                    && mIsPlaying.get()) {
 
                 int deltaPts;
                 if (nextFrame != null && nextFrame.isFirstFrame()) {

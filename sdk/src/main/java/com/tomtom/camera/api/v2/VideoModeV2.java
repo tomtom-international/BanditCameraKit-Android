@@ -115,8 +115,8 @@ class VideoModeV2 implements VideoMode {
                     getFramerate().equals(other.getFramerate()) &&
                     getResolution().equals(other.getResolution()) &&
                     getFieldOfView().equals(other.getFieldOfView()) &&
-                    getIntervalSecs().equals(other.getIntervalSecs()) &&
-                    getSlowMotionRate().equals(other.getSlowMotionRate());
+                    Objects.equal(getIntervalSecs(), other.getIntervalSecs()) &&
+                    Objects.equal(getSlowMotionRate(), other.getSlowMotionRate());
         }
         return false;
     }
