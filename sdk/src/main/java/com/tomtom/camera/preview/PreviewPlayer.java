@@ -84,7 +84,7 @@ class PreviewPlayer {
     }
 
     void stop() {
-        if (mIsPlaying.compareAndSet(false, true)) {
+        if (mIsPlaying.compareAndSet(true, false)) {
             mHandle.cancel(true);
         }
     }
