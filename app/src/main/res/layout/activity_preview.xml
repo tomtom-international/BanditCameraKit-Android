@@ -19,7 +19,7 @@
         android:layout_marginTop="16dp"
         android:layout_below="@id/gl_video_surface_view"
         android:enabled="false"
-        android:text="STOP" />
+        android:text="@string/btn_stop_label" />
 
     <Button
         android:id="@+id/start_preview"
@@ -29,6 +29,6 @@
         android:layout_marginStart="64dp"
         android:layout_marginTop="16dp"
         android:layout_below="@id/gl_video_surface_view"
-        android:text="START" />
+        android:text="@string/btn_start_label" />
 
 </RelativeLayout>
