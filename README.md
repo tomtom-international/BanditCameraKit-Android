@@ -39,6 +39,12 @@ All of them are licensed under the Apache 2.0 licence.
 
 ## Installation
 
+### Manual install
+
+If you prefer not to use Gradle dependencies, you can integrate CameraKit into your project manually. Just include aar file in your project library folder.
+
+You can find all releases on our Github [Releases](https://github.com/tomtom-international/BanditCameraKit-Android/releases/) page.
+
 ### Gradle build file
 
 Add jcenter() to repositories in your application module.
@@ -54,11 +60,6 @@ dependencies{
     compile 'com.tomtom.camera:camerakit:1.0.0'
 }
 ```
-
-### Manual install
-
-If you prefer not to use Gradle dependencies, you can integrate the CameraKit into your project manually. Just include aar file in your project library folder.
-
 
 ## Usage
 
