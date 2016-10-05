@@ -11,8 +11,15 @@ We hope you'll have fun using it as much as we had creating it!
 
 ## Requirements
 
+If you just want to import library binary in your project:
+
 - Android API 16 and above
-- Android Studio 2.1 and above
+
+If you want to include it as a module in your project:
+
+- Android Studio 2.2
+- Android SDK with API 24
+- Android Build Tools 24.0.3
 
 **NOTE:** In order to use the CameraKit you need a TomTom Bandit Action Camera with firmware version 1.57.500 or newer.
 
@@ -57,7 +64,7 @@ repositories {
 And add it to your dependencies list.
 ```gradle
 dependencies{
-    compile 'com.tomtom.camera:camerakit:1.0.0'
+    compile 'com.tomtom.camera:camerakit:1.0.1'
 }
 ```
 
