@@ -40,18 +40,21 @@ public interface CameraSettings {
 
     /**
      * Returns Camera's serial number as it's set up in the factory
+     * @return Camera serial number as string
      */
     String getCameraSerialNumber();
 
     /**
      * Unique camera ID used for BLE pairing. Generated as CRC32(serial_number),
      * represented as hexadecimal value.
+     * @return Camera BLE identification string
      */
     String getCameraBleId();
 
     /**
      * Random 8-byte alphanumeric sequence used for BLE authentication.
      * Includes characters from the pool (0-9)(a-z)(A-Z).
+     * @return Camera BLE verification code
      */
     String getCameraBleVerificationCode();
 

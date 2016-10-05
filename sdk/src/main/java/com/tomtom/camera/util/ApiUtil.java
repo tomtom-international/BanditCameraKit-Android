@@ -49,7 +49,7 @@ public class ApiUtil {
 
     /**
      * Provides {@link Gson} instance with handling date formats.
-     * @return
+     * @return {@link Gson} instance
      */
     public static final Gson getDateHandlingGson() {
         return new GsonBuilder()

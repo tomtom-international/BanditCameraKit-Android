@@ -44,7 +44,7 @@ public interface CameraFile extends Comparable<CameraFile> {
 
     /**
      * Returns file id.
-     * @return
+     * @return File identifier string
      */
     String getFileIdentifier();
 
@@ -52,7 +52,7 @@ public interface CameraFile extends Comparable<CameraFile> {
      * Returns id which will be used for comparing. For some types, this might not be the same as
      * file identifier.
      *
-     * @return
+     * @return String which can be used for comparing camera files
      */
     String getComparableId();
 

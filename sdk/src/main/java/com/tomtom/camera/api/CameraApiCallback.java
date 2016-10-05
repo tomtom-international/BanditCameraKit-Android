@@ -22,7 +22,7 @@ package com.tomtom.camera.api;
 public interface CameraApiCallback<T> {
     /**
      * If request was made successfully, this callback will be triggered providing object defined with type.
-     * @param t
+     * @param t Type defined object as a response.
      */
     void success(T t);
 

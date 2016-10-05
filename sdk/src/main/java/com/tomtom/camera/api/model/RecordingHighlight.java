@@ -70,7 +70,7 @@ public final class RecordingHighlight implements Highlight {
     }
 
     @Override
-    public void setSensorDataCollection(SensorDataCollection sensorData) {
+    public void setSensorDataCollection(SensorDataCollection sensorDataCollection) {
 
     }
 

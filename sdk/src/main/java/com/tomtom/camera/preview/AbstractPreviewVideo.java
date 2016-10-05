@@ -37,14 +37,18 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
 
     private static final float MILLISECONDS = 1000;
 
-    int mCurrentPlayingVideoIndex;
-    private boolean mPreviewActive;
+    private static boolean sPreviewActive;
+    private static PreviewCommand sNextStartPreviewCommand = null;
+    private static PreviewCommand sCurrentPreviewCommandToExecute = null;
+
     T mVideoSurface;
+
+    protected int mCurrentPlayingVideoIndex;
+    private int mCurrentBufferingVideoIndex;
 
     private Playable mCurrentPlayableFile;
     private Playable[] mPlayableFiles;
     private ArrayList<PreviewPlayableFile> mPreviewCameraFiles;
-    private int mCurrentBufferingVideoIndex;
 
     private int mTotalDurationMillis;
     private CameraPreviewStreamServer mPreviewStreamServer;
@@ -56,8 +60,6 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
 
     private boolean mIsInitialized;
     private boolean mIsRestarted;
-    private PreviewCommand mNextStartPreviewCommand = null;
-    private PreviewCommand mCurrentPreviewCommandToExecute = null;
 
     private PreviewApiClient mPreviewApiClient;
 
@@ -172,7 +174,7 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
 
     /**
      * Prepares preview for given array of playable files
-     * @param playableFiles
+     * @param playableFiles array of playable files
      */
     public void preparePreview(Playable... playableFiles) {
         try {
@@ -232,7 +234,7 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
         mPlayableFiles = null;
         mCurrentPlayableFile = null;
         mIsInitialized = false;
-        mCurrentPreviewCommandToExecute = null;
+        sCurrentPreviewCommandToExecute = null;
     }
 
     private void seekPreviewForFile(Playable cameraFile, float seekToTimeSecs) {
@@ -361,12 +363,12 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
     }
 
     private synchronized void sendPreviewCommand(PreviewCommand previewCommand) {
-        if (mCurrentPreviewCommandToExecute != null) {
+        if (sCurrentPreviewCommandToExecute != null) {
             if (previewCommand.command == PreviewCommand.START) {
-                mNextStartPreviewCommand = previewCommand;
+                sNextStartPreviewCommand = previewCommand;
                 Logger.info(TAG, "Adding next preview start to schedule");
             } else {
-                Logger.info(TAG, "Already executing a command " + mCurrentPreviewCommandToExecute.command);
+                Logger.info(TAG, "Already executing a command " + sCurrentPreviewCommandToExecute.command);
             }
             return;
         }
@@ -374,7 +376,7 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
             Logger.error(TAG, "Null command sent");
             return;
         }
-        mCurrentPreviewCommandToExecute = previewCommand;
+        sCurrentPreviewCommandToExecute = previewCommand;
         mPreviewApiClient.executePreviewCommand(previewCommand);
     }
 
@@ -383,9 +385,9 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
      * @param isSuccessful camera preview start request success
      */
     public void onCameraPreviewStarted(boolean isSuccessful) {
-        mCurrentPreviewCommandToExecute = null;
+        sCurrentPreviewCommandToExecute = null;
         if (isSuccessful) {
-            mPreviewActive = true;
+            sPreviewActive = true;
             Logger.info(TAG, "PreviewVideo started");
             sendPendingStartCommand();
         }
@@ -401,28 +403,28 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
      * @param isSuccessful camera preview stop request success
      */
     public void onCameraPreviewStopped(boolean isSuccessful) {
-        mCurrentPreviewCommandToExecute = null;
+        sCurrentPreviewCommandToExecute = null;
         if (isSuccessful) {
-            mPreviewActive = false;
+            sPreviewActive = false;
             Logger.info(TAG, "PreviewVideo stopped");
             sendPendingStartCommand();
         }
     }
 
     private void sendPendingStartCommand() {
-        if(mNextStartPreviewCommand != null) {
+        if(sNextStartPreviewCommand != null) {
             startPreviewStreamServer();
             Logger.info(TAG, "Sending scheduled start");
-            mNextStartPreviewCommand.previewVideoPort = mPreviewStreamServer.getPort();
-            sendPreviewCommand(mNextStartPreviewCommand);
-            mNextStartPreviewCommand = null;
+            sNextStartPreviewCommand.previewVideoPort = mPreviewStreamServer.getPort();
+            sendPreviewCommand(sNextStartPreviewCommand);
+            sNextStartPreviewCommand = null;
         }
     }
 
 
     private void scheduleNextCommand(PreviewCommand command) {
         Logger.info(TAG, "Scheduling " + command.command);
-        mNextStartPreviewCommand = command;
+        sNextStartPreviewCommand = command;
     }
 
     /**
@@ -458,7 +460,7 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
 
     /**
      * Provides index about {@link Playable} file at the given time position
-     * @param timeMillisInTotalDuration
+     * @param timeMillisInTotalDuration millis in total duration
      * @return index of file
      */
     public int getPreviewPlayableFileIndex(int timeMillisInTotalDuration) {
@@ -485,8 +487,8 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
     /**
      * Provides information about which file and its offset is on the total offset for all video files
      * set in preview.
-     * @param timeMillisInTotalDuration
-     * @return {@link Pair<String, Float>} of given video and offet.
+     * @param timeMillisInTotalDuration current millis in total duration
+     * @return {@link Pair} of given video and offet.
      */
     public Pair<String, Float> getPlayableFileIdAndOffset(int timeMillisInTotalDuration) {
         float secondsInTotalDuration = (float) timeMillisInTotalDuration / MILLISECONDS;
@@ -499,7 +501,7 @@ abstract class AbstractPreviewVideo<T extends VideoSurface> {
      * @return {@code true} if active, {@code false} if not.
      */
     public boolean isPreviewActive() {
-        return mPreviewActive;
+        return sPreviewActive;
     }
 
     private class PreviewPlayableFile {

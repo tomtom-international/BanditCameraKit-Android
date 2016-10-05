@@ -22,7 +22,7 @@ package com.tomtom.camera.api.model;
 public interface Preview {
     /**
      * Provides id of the video which we want to preview
-     * @return
+     * @return video id
      */
     String getVideoId();
 

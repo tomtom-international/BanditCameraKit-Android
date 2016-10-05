@@ -66,13 +66,13 @@ public interface Highlight extends CameraFile, Playable {
 
     /**
      * Sets parent video for Highlight
-     * @param video
+     * @param video parent Video file
      */
     void setVideo(Video video);
 
     /**
      * Returns value for Highlight. Each type expects different value.
-     * @return
+     * @return highlight value
      */
     Object getValue();
 
@@ -84,16 +84,19 @@ public interface Highlight extends CameraFile, Playable {
 
     /**
      * Sets {@link SensorDataCollection} for given Highlight
+     * @param sensorDataCollection sensor data collection
      */
-    void setSensorDataCollection(SensorDataCollection sensorData);
+    void setSensorDataCollection(SensorDataCollection sensorDataCollection);
 
     /**
      * Provides {@link SensorDataCollection} for given Highlight
+     * @return SensorDataCollection for given Highlight
      */
     SensorDataCollection getSensorDataCollection();
 
     /**
      * Provides {@link Type} of Highlight
+     * @return Type of Highlight
      */
     Type getHighlightType();
 

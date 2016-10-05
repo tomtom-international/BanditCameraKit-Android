@@ -131,8 +131,8 @@ class HighlightV2 implements Highlight {
     }
 
     @Override
-    public void setSensorDataCollection(SensorDataCollection sensorData) {
-        mSensorData = sensorData;
+    public void setSensorDataCollection(SensorDataCollection sensorDataCollection) {
+        mSensorData = sensorDataCollection;
     }
 
     @Override

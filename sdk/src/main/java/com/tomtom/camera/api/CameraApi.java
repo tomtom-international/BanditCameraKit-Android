@@ -135,6 +135,7 @@ public interface CameraApi {
 
     /**
      * Async call for starting/stopping recording
+     * @param isRecording Requested recording status, {@code true} if starting, {@code false} if stopping
      * @param callback Callback providing result of the request
      */
     void setRecordingStatus(boolean isRecording, CameraApiCallback<Void> callback);

@@ -35,7 +35,7 @@ public abstract class ViewfinderStreamServer {
      * Consumer of Viewfinder stream should provide implementation of {@link OnStreamDataReceivedListener}
      * to ViewfinderStreamSertver in order to be able to receive data. It can be set to null in order
      * to remove reference and avoid memory leak.
-     * @param onStreamDataReceivedListener
+     * @param onStreamDataReceivedListener Listener implementation
      */
     public void setOnStreamDataReceivedListener(@Nullable OnStreamDataReceivedListener onStreamDataReceivedListener) {
         Logger.debug(TAG, "setOnStreamDataReceivedListener " + onStreamDataReceivedListener);

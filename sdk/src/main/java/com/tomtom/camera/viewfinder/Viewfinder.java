@@ -135,7 +135,7 @@ public class Viewfinder {
     /**
      * Sets {@link OnImageReceivedListener} to Viewfinder in order to get JPG images from camera
      * viewfinder stream. To protect from leaking references, set to null when needed.
-     * @param onImageReceivedListener
+     * @param onImageReceivedListener Listener implementation
      */
     public void setOnImageReceivedListener(OnImageReceivedListener onImageReceivedListener) {
         mOnImageReceivedListener = onImageReceivedListener;

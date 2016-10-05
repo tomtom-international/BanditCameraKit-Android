@@ -90,11 +90,13 @@ public interface Image extends CameraFile {
 
     /**
      * Provides mode used to record image
+     * @return image recording mode
      */
     Image.Mode getMode();
 
     /**
      * Provides captured image resolution
+     * @return image resolution
      */
     String getResolution();
 }

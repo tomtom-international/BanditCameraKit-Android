@@ -30,8 +30,9 @@ public interface BackchannelNotificationsParser {
 
     /**
      * Returns parsed backchannel notification from JSON string  sent from camera
-     * @param messageString JOSN string
+     * @param messageString JSON string
      * @return {@link BackchannelNotification} value
+     * @throws JSONException if message string can't be parsed
      */
     BackchannelNotification parse(String messageString) throws JSONException;
 
